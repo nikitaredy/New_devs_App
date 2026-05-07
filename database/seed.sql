@@ -6,7 +6,7 @@ INSERT INTO tenants (id, name) VALUES
 -- INSERT PROPERTIES
 INSERT INTO properties (id, tenant_id, name, timezone) VALUES
     ('prop-001', 'tenant-a', 'Beach House Alpha', 'Europe/Paris'),
-    ('prop-001', 'tenant-b', 'Mountain Lodge Beta', 'America/New_York'),
+    ('prop-006', 'tenant-b', 'Mountain Lodge Beta', 'America/New_York'),
     ('prop-002', 'tenant-a', 'City Apartment Downtown', 'Europe/Paris'),
     ('prop-003', 'tenant-a', 'Country Villa Estate', 'Europe/Paris'),
     ('prop-004', 'tenant-b', 'Lakeside Cottage', 'America/New_York'),
