@@ -1,3 +1,9 @@
+### MY LOOM VIDEO LINK
+https://www.loom.com/share/e3699a7a32a94e0ea9d3154add6841e8
+
+
+
+
 ### 1 privacy leak
 fix: add tenant isolation to revenue cache key
 
@@ -40,3 +46,7 @@ backend — it was a static list with no tenant context at all.
 Fix: identified that the dropdown needs to call GET /api/v1/properties
 filtered by tenant_id from the authenticated user's token.
 Flagged for full fix — requires a new backend endpoint + frontend rebuild.
+
+
+
+
