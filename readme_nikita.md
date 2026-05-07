@@ -1,52 +1,54 @@
-### MY LOOM VIDEO LINK
-https://www.loom.com/share/e3699a7a32a94e0ea9d3154add6841e8
+## Bug Fixes — Property Revenue Dashboard
 
+**Loom:** https://www.loom.com/share/e3699a7a32a94e0ea9d3154add6841e8
 
+---
 
+### Bug 1 — Cache key had no tenant isolation
+`backend/app/services/cache.py`
 
-### 1 privacy leak
-fix: add tenant isolation to revenue cache key
+Cache was keyed on property_id only. Two tenants querying the 
+same property_id would share cached results — Ocean could see 
+Sunset's revenue on refresh.
 
-Cache key was using only property_id, allowing cross-tenant
-cache hits. Ocean Rentals could see Sunset Properties data
-on cache refresh.
+Before: `revenue:{property_id}`  
+After: `revenue:{tenant_id}:{property_id}`
 
-Fix: prefix cache key with tenant_id
-- Before: revenue:{property_id}
-- After:  revenue:{tenant_id}:{property_id}"
+---
 
-### 2 Wrong Revenue Totals
-"fix: enforce strict tenant context in dashboard API
+### Bug 2 — Silent tenant fallback returning wrong data
+`backend/app/api/v1/dashboard.py` + `backend/app/services/reservations.py`
 
-getattr fallback to 'default_tenant' was silently merging
-multiple clients under one tenant when auth context was missing.
+dashboard.py had a getattr fallback to "default_tenant" when 
+auth context was missing — no error, just wrong data silently.
 
-Fix: raise HTTP 401 if tenant_id cannot be resolved"
+Also found: when the DB pool fails, reservations.py falls back 
+to hardcoded mock_data keyed only by property_id. No tenant 
+check at all — any tenant gets the same numbers.
 
-### 3 — Rounding Errors
-"fix: prevent float precision loss on revenue totals
+Fix: raise 401 if tenant_id is missing. Mock fallback flagged 
+for removal.
 
-Converting Decimal to float caused rounding errors e.g.
-4975.50 becoming 4975.4999999. Finance team reported
-discrepancies of a few cents across reports.
+---
 
-Fix: return total_revenue as string from Decimal directly
+### Bug 3 — Float precision dropping cents
+`backend/app/api/v1/dashboard.py`
 
+Decimal was being cast to float before returning. Caused values 
+like 4975.50 to come back as 4975.4999999. Finance team noticed 
+the discrepancy.
 
-### 4- prop-001
-fix: remove hardcoded property list from frontend dashboard
+Fix: return the Decimal as string directly, skip the float cast.
 
-Dashboard.tsx had all 5 properties hardcoded as a static array,
-showing ALL properties to ALL tenants regardless of who is logged in.
-Ocean Rentals could see Sunset's properties in the dropdown and vice versa.
+---
 
-Root cause: PROPERTIES array in Dashboard.tsx was not fetched from the
-backend — it was a static list with no tenant context at all.
+### Bug 4 — Property dropdown hardcoded, no tenant filtering
+`frontend/src/components/Dashboard.tsx`
 
-Fix: identified that the dropdown needs to call GET /api/v1/properties
-filtered by tenant_id from the authenticated user's token.
-Flagged for full fix — requires a new backend endpoint + frontend rebuild.
+PROPERTIES array was static — all 5 properties from both tenants 
+hardcoded in the frontend. Ocean could select and query Sunset's 
+properties directly.
 
-
-
-
+Not fully fixed — needs a new GET /api/v1/properties endpoint 
+filtered by tenant_id and frontend to fetch on mount instead 
+of using a static list. Flagged for next sprint.
